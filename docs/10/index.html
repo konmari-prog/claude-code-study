@@ -832,52 +832,32 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
       <span class="material-icons-outlined">arrow_downward</span>
     </div>
 
-    <!-- Step 5: スキルインストール（2つ） -->
+    <!-- Step 5: スキルインストール -->
     <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       <div class="step-bar">
         <div class="step-bar-number">STEP 5</div>
-        <div class="step-bar-title">2つのスキルをインストール</div>
+        <div class="step-bar-title">GASガイドラインスキルをインストール</div>
       </div>
 
-      <p class="text-sm text-slate-600 mb-3">Claude Code に「GASの書き方ルール」と「アンケート集計の作り方」を覚えさせます。2つのスキルをインストールします。</p>
+      <p class="text-sm text-slate-600 mb-3">Claude Code に「GASの書き方ルール」を覚えさせます。これを入れると、コードの品質が安定します。</p>
 
-      <!-- スキル1: gas-guidelines -->
-      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-3">
-        <p class="text-xs font-bold text-[#0369A1] mb-2 flex items-center gap-1"><span class="material-icons-outlined text-sm">inventory_2</span> スキル 1: gas-guidelines（GASの品質ルール）</p>
-        <div class="instruction-block mb-2">
-          <ol>
-            <li>スキルギャラリーから <strong>gas-guidelines</strong> をダウンロード</li>
-            <li>Claude Code にファイルパスを渡してインストール</li>
-          </ol>
-        </div>
-        <div class="prompt-box">
-          <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-skill-1')">
-            <span class="material-icons-outlined text-base">content_copy</span> コピー
-          </button>
-          <pre id="prompt-skill-1">@/Users/あなたのユーザー名/Downloads/gas-guidelines.zip をインストールして</pre>
-        </div>
+      <div class="instruction-block">
+        <ol>
+          <li>スキルギャラリーから <strong>gas-guidelines</strong> をダウンロード</li>
+          <li>Claude Code にファイルパスを渡してインストール</li>
+        </ol>
       </div>
 
-      <!-- スキル2: gas-survey-builder -->
-      <div class="bg-[#BFE4FF]/10 rounded-xl p-4 border border-[#BFE4FF]/30 mb-3">
-        <p class="text-xs font-bold text-[#0369A1] mb-2 flex items-center gap-1"><span class="material-icons-outlined text-sm">inventory_2</span> スキル 2: gas-survey-builder（アンケート集計）</p>
-        <div class="instruction-block mb-2">
-          <ol>
-            <li>スキルギャラリーから <strong>gas-survey-builder</strong> をダウンロード</li>
-            <li>Claude Code にファイルパスを渡してインストール</li>
-          </ol>
-        </div>
-        <div class="prompt-box">
-          <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-skill-2')">
-            <span class="material-icons-outlined text-base">content_copy</span> コピー
-          </button>
-          <pre id="prompt-skill-2">@/Users/あなたのユーザー名/Downloads/gas-survey-builder.zip をインストールして</pre>
-        </div>
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-skill')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-skill">@/Users/あなたのユーザー名/Downloads/gas-guidelines.zip をインストールして</pre>
       </div>
 
       <div class="tip-box">
         <span class="material-icons-outlined">lightbulb</span>
-        <p>第7回で kikaku スキルをインストールしたのと同じ手順です。<strong>gas-guidelines</strong> はGASの鉄則・実行制限を守らせるルール、<strong>gas-survey-builder</strong> はアンケート集計GASの生成手順を覚えさせるスキルです。両方入れると品質が安定します。</p>
+        <p>第7回で kikaku スキルをインストールしたのと同じ手順です。このスキルが入っていると、GASの鉄則・実行制限・ヘッダールールなどを Claude Code が自動で守ってくれます。</p>
       </div>
     </div>
 
