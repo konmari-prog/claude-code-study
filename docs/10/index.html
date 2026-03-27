@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Claude Code 勉強会 第10回 | Claude Code x GAS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#BFE4FF",
+        "primary-vivid": "#4DC4FF",
+        secondary: "#FFCABF",
+        "secondary-vivid": "#FF8082",
+        accent: "#FFFF80",
+        lavender: "#C9ACE6",
+        "background-light": "#FAFAF8",
+        "background-dark": "#2D2B3D",
+      },
+      fontFamily: {
+        display: ["Inter", "Noto Sans JP", "sans-serif"],
+        sans: ["Inter", "Noto Sans JP", "sans-serif"],
+      },
+    },
+  },
+};
+</script>
+<style>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.hero-gradient { background: #4DC4FF; }
+.copy-btn { transition: all 0.2s; }
+.copy-btn:hover { transform: scale(1.05); }
+.copy-btn.copied { background: #10B981 !important; }
+.prompt-box {
+  background: #1e1e1e;
+  border-radius: 0.75rem;
+  position: relative;
+}
+.prompt-box pre {
+  color: #e2e8f0;
+  font-family: 'Noto Sans JP', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  padding: 1.25rem;
+  padding-right: 5.5rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.step-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #4DC4FF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Step bar header */
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+.step-bar-number {
+  background: #4DC4FF;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 16px;
+  border-radius: 6px 0 0 6px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.step-bar-title {
+  background: #e0f2fe;
+  padding: 6px 20px;
+  border-radius: 0 6px 6px 0;
+  flex: 1;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+/* Terminal mock */
+.terminal-mock {
+  background: #1e1e2e;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 12px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.terminal-bar {
+  background: #313244;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.terminal-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+.terminal-dot.red { background: #f38ba8; }
+.terminal-dot.yellow { background: #f9e2af; }
+.terminal-dot.green { background: #a6e3a1; }
+.terminal-bar-label {
+  color: #a6adc8;
+  font-size: 12px;
+  margin-left: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.terminal-body {
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #cdd6f4;
+}
+.terminal-body .prompt { color: #a6e3a1; }
+.terminal-body .command { color: #f5e0dc; }
+.terminal-body .output { color: #bac2de; }
+
+/* Instruction block */
+.instruction-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 0;
+}
+.instruction-block ol {
+  padding-left: 20px;
+  margin: 0;
+}
+.instruction-block li {
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  padding-left: 4px;
+  color: #475569;
+}
+.instruction-block li:last-child { margin-bottom: 0; }
+
+/* Tip box */
+.tip-box {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.tip-box .material-icons-outlined {
+  color: #f59e0b;
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.tip-box p {
+  font-size: 0.8rem;
+  margin: 0;
+  color: #78350f;
+}
+
+/* Step arrow */
+.step-arrow-down {
+  text-align: center;
+  margin: -8px 0 16px;
+}
+.step-arrow-down .material-icons-outlined {
+  font-size: 32px;
+  color: #bae6fd;
+}
+
+/* kbd */
+.kbd-key {
+  display: inline-block;
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  border-bottom: 2px solid #b8b8b8;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #1e293b;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+</style>
+</head>
+<body class="bg-background-light text-slate-800">
+
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+  <div class="flex items-center space-x-2">
+    <span class="material-icons-outlined text-[#4DC4FF] text-2xl">terminal</span>
+    <span class="font-bold text-lg tracking-tight">Claude Code 勉強会</span>
+  </div>
+  <nav class="flex items-center space-x-4 text-sm font-medium">
+    <a class="hover:text-[#4DC4FF] transition-colors hidden sm:block" href="#flow">流れ</a>
+    <a class="hover:text-[#4DC4FF] transition-colors hidden sm:block" href="#part-1">Part 1</a>
+    <a class="hover:text-[#4DC4FF] transition-colors hidden sm:block" href="#part-2">Part 2</a>
+    <a class="hover:text-[#4DC4FF] transition-colors hidden sm:block" href="#part-3">Part 3</a>
+  </nav>
+</div>
+</header>
+
+<!-- Hero -->
+<section class="hero-gradient py-16 lg:py-24 text-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+  <p class="font-bold tracking-widest uppercase mb-3 text-sm text-white/80">Claude Code 勉強会 第10回 &#8212; 2026.03.27</p>
+  <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+    Claude Code x GAS<br/>
+    <span class="text-white/90 text-xl md:text-2xl font-bold">コードは書かない。Claude に書かせて、動かすだけ。</span>
+  </h1>
+  <p class="max-w-2xl mx-auto text-base text-white/90 mb-10 leading-relaxed">
+    Google Apps Script でアンケート集計ダッシュボードを作る。<br class="hidden sm:block"/>
+    clasp push ひとつで、あなたのスプレッドシートがWEBアプリになる。
+  </p>
+
+  <!-- Flow Diagram -->
+  <div class="max-w-4xl mx-auto">
+    <div class="rounded-2xl p-4">
+      <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-1">
+        <div class="bg-white rounded-xl p-4 text-center min-w-[110px] shadow-sm">
+          <span class="material-icons-outlined text-3xl mb-1 block text-[#4DC4FF]">play_circle</span>
+          <p class="text-xs font-bold text-slate-800">1. デモを見る</p>
+          <p class="text-xs text-[#0369A1] mt-0.5">完成品を体感</p>
+        </div>
+        <span class="material-icons-outlined text-xl text-white rotate-90 md:rotate-0">chevron_right</span>
+        <div class="bg-white rounded-xl p-4 text-center min-w-[110px] shadow-sm">
+          <span class="material-icons-outlined text-3xl mb-1 block text-[#4DC4FF]">school</span>
+          <p class="text-xs font-bold text-slate-800">2. GASを知る</p>
+          <p class="text-xs text-[#0369A1] mt-0.5">概念を理解</p>
+        </div>
+        <span class="material-icons-outlined text-xl text-white rotate-90 md:rotate-0">chevron_right</span>
+        <div class="bg-white rounded-xl p-4 text-center min-w-[110px] shadow-sm border-2 border-[#e6d800]">
+          <span class="material-icons-outlined text-3xl mb-1 block text-slate-700">rocket_launch</span>
+          <p class="text-xs font-bold text-slate-800">3. 自分で作る</p>
+          <p class="text-xs text-[#0369A1] mt-0.5">clasp push で動かす</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 勉強会ゴール -->
+<section class="py-12 bg-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-8">
+    <p class="text-sm font-bold text-[#0369A1] uppercase tracking-wider mb-2">Study Group Goal</p>
+    <h2 class="text-2xl md:text-3xl font-extrabold">Claude Code 勉強会のゴール</h2>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto mb-8">
+    <div class="bg-[#BFE4FF]/10 rounded-2xl p-6 border border-[#BFE4FF]/40 text-center">
+      <span class="material-icons-outlined text-4xl text-[#4DC4FF] mb-2 block">groups</span>
+      <p class="text-2xl font-extrabold text-slate-800 mb-1">各チーム2人</p>
+      <p class="text-sm text-slate-600">Claude Code 使いが現れるまで</p>
+    </div>
+    <div class="bg-[#BFE4FF]/10 rounded-2xl p-6 border border-[#BFE4FF]/40 text-center">
+      <span class="material-icons-outlined text-4xl text-[#4DC4FF] mb-2 block">school</span>
+      <p class="text-2xl font-extrabold text-slate-800 mb-1">講師5人</p>
+      <p class="text-sm text-slate-600">師匠以外で生徒にレクチャーできる人</p>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto">
+    <div class="bg-slate-800 text-white rounded-2xl p-6">
+      <div class="flex items-start gap-3">
+        <span class="material-icons-outlined text-[#FF8082] text-xl mt-0.5 flex-shrink-0">warning</span>
+        <div>
+          <p class="text-sm font-bold text-[#FF8082] mb-1">参加条件</p>
+          <p class="text-sm leading-relaxed text-white/90">第9回以降はアンケート・宿題を出した人のみ参加できます。今回も宿題があります。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Before / After -->
+<section class="py-12 bg-[#FAFAF8]">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-8">
+    <p class="text-sm font-bold text-[#FF8082] uppercase tracking-wider mb-2">Today's Goal</p>
+    <h2 class="text-2xl md:text-3xl font-extrabold">今日で変わること</h2>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+    <div class="bg-slate-100 rounded-2xl p-6 border border-slate-300">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-icons-outlined text-slate-400 text-xl">cancel</span>
+        <span class="font-bold text-slate-600">Before</span>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-slate-400 text-base mt-0.5 flex-shrink-0">close</span>
+          <span class="text-sm">GASって聞いたことはあるけど触ったことない</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-slate-400 text-base mt-0.5 flex-shrink-0">close</span>
+          <span class="text-sm">コードを書くのは自分には無理だと思っている</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-slate-400 text-base mt-0.5 flex-shrink-0">close</span>
+          <span class="text-sm">アンケート集計はスプレッドシートで手作業</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-slate-400 text-base mt-0.5 flex-shrink-0">close</span>
+          <span class="text-sm">clasp って何？</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-[#BFE4FF]/10 rounded-2xl p-6 border border-[#BFE4FF]/40">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-icons-outlined text-[#4DC4FF] text-xl">check_circle</span>
+        <span class="font-bold text-[#0369A1]">After</span>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-base mt-0.5 flex-shrink-0">check_circle</span>
+          <span class="text-sm">GASが何かわかった。自分でも使える</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-base mt-0.5 flex-shrink-0">check_circle</span>
+          <span class="text-sm">コードはClaude Codeが書いてくれると知った</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-base mt-0.5 flex-shrink-0">check_circle</span>
+          <span class="text-sm">アンケート集計ダッシュボードが自分で動かせた</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-base mt-0.5 flex-shrink-0">check_circle</span>
+          <span class="text-sm">clasp push でGASをデプロイできた</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 今日の流れ -->
+<section id="flow" class="py-12 bg-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-8">
+    <p class="text-sm font-bold text-[#0369A1] uppercase tracking-wider mb-2">Schedule</p>
+    <h2 class="text-2xl md:text-3xl font-extrabold">今日の流れ</h2>
+  </div>
+  <div class="max-w-3xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-1">
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border border-slate-200 shadow-sm text-center min-w-[140px] flex-1">
+        <span class="material-icons-outlined text-3xl mb-1 block text-[#4DC4FF]">play_circle</span>
+        <p class="text-sm font-bold text-slate-800">デモ</p>
+        <p class="text-xs text-slate-500 mt-0.5">完成品を見て驚く</p>
+      </div>
+      <span class="material-icons-outlined text-xl text-slate-300 rotate-90 md:rotate-0">chevron_right</span>
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border border-slate-200 shadow-sm text-center min-w-[140px] flex-1">
+        <span class="material-icons-outlined text-3xl mb-1 block text-[#4DC4FF]">school</span>
+        <p class="text-sm font-bold text-slate-800">概念理解</p>
+        <p class="text-xs text-slate-500 mt-0.5">GAS / ウェブアプリ / clasp</p>
+      </div>
+      <span class="material-icons-outlined text-xl text-slate-300 rotate-90 md:rotate-0">chevron_right</span>
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border-2 border-[#e6d800] shadow-sm text-center min-w-[140px] flex-1">
+        <span class="material-icons-outlined text-3xl mb-1 block text-slate-700">rocket_launch</span>
+        <p class="text-sm font-bold text-slate-800">ハンズオン</p>
+        <p class="text-xs text-slate-500 mt-0.5">Claude Codeで作って動かす</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Part 1: デモ -->
+<section id="part-1" class="py-14 bg-[#C9ACE6]/5">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="mb-8">
+    <span class="inline-block bg-[#FF8082]/10 text-[#FF8082] px-4 py-1 rounded-full text-sm font-bold mb-4">Part 1</span>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-2">デモ: これがGASで作れる</h2>
+    <p class="text-slate-500">まずは完成品を見てもらいます。今日のゴールのイメージを共有</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+    <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+      <span class="material-icons-outlined text-[#4DC4FF] text-base">visibility</span>
+      ライブデモ
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="bg-[#BFE4FF]/10 rounded-xl p-5 border border-[#BFE4FF]/30">
+        <span class="material-icons-outlined text-2xl text-[#4DC4FF] mb-2 block">description</span>
+        <p class="font-bold text-sm mb-1">Googleフォーム</p>
+        <p class="text-xs text-slate-500">GASが自動で作ったアンケートフォーム。設問もコードから生成</p>
+      </div>
+      <div class="bg-[#BFE4FF]/10 rounded-xl p-5 border border-[#BFE4FF]/30">
+        <span class="material-icons-outlined text-2xl text-[#4DC4FF] mb-2 block">analytics</span>
+        <p class="font-bold text-sm mb-1">集計ダッシュボード</p>
+        <p class="text-xs text-slate-500">4ページ構成のWEBアプリ。回答するとリアルタイムに反映される</p>
+      </div>
+    </div>
+
+    <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+      <span class="material-icons-outlined text-[#4DC4FF] text-base">dashboard</span>
+      ダッシュボード 4ページ構成
+    </h3>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+        <span class="material-icons-outlined text-xl text-[#4DC4FF] mb-1 block">bar_chart</span>
+        <p class="text-xs font-bold">Dashboard</p>
+        <p class="text-xs text-slate-500">スコア & グラフ</p>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+        <span class="material-icons-outlined text-xl text-[#FF8082] mb-1 block">local_fire_department</span>
+        <p class="text-xs font-bold">Hot Words</p>
+        <p class="text-xs text-slate-500">頻出ワード検知</p>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+        <span class="material-icons-outlined text-xl text-[#C9ACE6] mb-1 block">chat_bubble</span>
+        <p class="text-xs font-bold">Comments</p>
+        <p class="text-xs text-slate-500">注目コメント</p>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+        <span class="material-icons-outlined text-xl text-slate-600 mb-1 block">help</span>
+        <p class="text-xs font-bold">FAQ</p>
+        <p class="text-xs text-slate-500">質問を自動FAQ化</p>
+      </div>
+    </div>
+
+    <div class="bg-[#FFFF80]/20 border border-[#e6d800] rounded-xl p-3 flex items-center gap-2">
+      <span class="material-icons-outlined text-slate-700 text-base flex-shrink-0">lightbulb</span>
+      <p class="text-sm text-slate-700">これを今日、自分の手で作ります。コードはClaude Codeが全部書いてくれます。</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Part 2: GASとは？ -->
+<section id="part-2" class="py-14 bg-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="mb-8">
+    <span class="inline-block bg-[#FF8082]/10 text-[#FF8082] px-4 py-1 rounded-full text-sm font-bold mb-4">Part 2</span>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-2">GASとは？ウェブアプリとは？</h2>
+    <p class="text-slate-500">手を動かす前に、今日使う道具を理解しよう</p>
+  </div>
+
+  <div class="space-y-5">
+    <!-- GASとは -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+        <span class="material-icons-outlined text-[#4DC4FF] text-xl">code</span>
+        Google Apps Script（GAS）
+      </h3>
+      <p class="text-sm text-slate-600 mb-4">Googleが提供する、Googleサービスを自動化するためのプログラミング環境。スプレッドシート、フォーム、Gmail、カレンダーなどをコードで操作できる。</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div class="bg-[#BFE4FF]/10 rounded-xl p-4 border border-[#BFE4FF]/30 text-center">
+          <span class="material-icons-outlined text-2xl text-[#4DC4FF] mb-1 block">table_chart</span>
+          <p class="text-xs font-bold">スプレッドシート</p>
+          <p class="text-xs text-slate-500">データの読み書き</p>
+        </div>
+        <div class="bg-[#BFE4FF]/10 rounded-xl p-4 border border-[#BFE4FF]/30 text-center">
+          <span class="material-icons-outlined text-2xl text-[#4DC4FF] mb-1 block">quiz</span>
+          <p class="text-xs font-bold">Googleフォーム</p>
+          <p class="text-xs text-slate-500">フォーム自動生成</p>
+        </div>
+        <div class="bg-[#BFE4FF]/10 rounded-xl p-4 border border-[#BFE4FF]/30 text-center">
+          <span class="material-icons-outlined text-2xl text-[#4DC4FF] mb-1 block">language</span>
+          <p class="text-xs font-bold">WEBアプリ</p>
+          <p class="text-xs text-slate-500">URLで公開できる</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 text-white rounded-xl p-4 mb-3">
+        <p class="text-sm font-bold text-[#4DC4FF] mb-2">今日のポイント</p>
+        <p class="text-sm text-white/90">GASのコードを自分で書く必要はありません。Claude Code が書いてくれます。あなたがやるのは「こういうの作って」と伝えることだけ。</p>
+      </div>
+
+      <a href="https://developers.google.com/apps-script/guides/services/quotas?hl=ja" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-[#4DC4FF] text-white font-bold text-sm px-5 py-3 rounded-xl hover:bg-[#3AB4EF] transition-colors no-underline">
+        <span class="material-icons-outlined text-base">open_in_new</span>
+        GAS の割り当てと制限を見る（Google公式）
+      </a>
+    </div>
+
+    <!-- ウェブアプリとは -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+        <span class="material-icons-outlined text-[#4DC4FF] text-xl">language</span>
+        ウェブアプリ（doGet）
+      </h3>
+      <p class="text-sm text-slate-600 mb-4">GASで <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">doGet()</code> という関数を作ると、URLでアクセスできるWebページになる。サーバー不要、ホスティング不要。Googleが全部やってくれる。</p>
+
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border border-slate-200">
+        <p class="text-xs font-bold text-[#0369A1] mb-3">データの流れ</p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+          <div class="bg-white rounded-lg p-3 border border-slate-200 min-w-[100px]">
+            <span class="material-icons-outlined text-xl text-[#4DC4FF] block mb-1">quiz</span>
+            <p class="text-xs font-bold">フォーム</p>
+            <p class="text-xs text-slate-400">回答を収集</p>
+          </div>
+          <span class="material-icons-outlined text-slate-300 rotate-90 sm:rotate-0">arrow_forward</span>
+          <div class="bg-white rounded-lg p-3 border border-slate-200 min-w-[100px]">
+            <span class="material-icons-outlined text-xl text-[#4DC4FF] block mb-1">table_chart</span>
+            <p class="text-xs font-bold">スプシ</p>
+            <p class="text-xs text-slate-400">データ保存</p>
+          </div>
+          <span class="material-icons-outlined text-slate-300 rotate-90 sm:rotate-0">arrow_forward</span>
+          <div class="bg-white rounded-lg p-3 border border-slate-200 min-w-[100px]">
+            <span class="material-icons-outlined text-xl text-[#4DC4FF] block mb-1">code</span>
+            <p class="text-xs font-bold">GAS</p>
+            <p class="text-xs text-slate-400">集計処理</p>
+          </div>
+          <span class="material-icons-outlined text-slate-300 rotate-90 sm:rotate-0">arrow_forward</span>
+          <div class="bg-white rounded-lg p-3 border-2 border-[#e6d800] min-w-[100px]">
+            <span class="material-icons-outlined text-xl text-slate-700 block mb-1">analytics</span>
+            <p class="text-xs font-bold">ダッシュボード</p>
+            <p class="text-xs text-slate-400">WEBアプリ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- claspとは -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+        <span class="material-icons-outlined text-[#4DC4FF] text-xl">cloud_upload</span>
+        clasp &#8212; 世界が変わるツール
+      </h3>
+      <p class="text-sm text-slate-600 mb-4">clasp（Command Line Apps Script Projects）は、<strong>Googleが作った</strong>CLIツール。ローカルのファイルをGASにアップロードできる。</p>
+
+      <!-- 関係性の図解 -->
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border border-slate-200 mb-4">
+        <p class="text-xs font-bold text-[#0369A1] mb-3">3つの道具の関係</p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+          <div class="bg-white rounded-lg p-3 border border-slate-200 min-w-[120px]">
+            <span class="material-icons-outlined text-xl text-[#4DC4FF] block mb-1">smart_toy</span>
+            <p class="text-xs font-bold">Claude Code</p>
+            <p class="text-xs text-slate-400">コードを書く</p>
+          </div>
+          <span class="material-icons-outlined text-slate-300 rotate-90 sm:rotate-0">arrow_forward</span>
+          <div class="bg-white rounded-lg p-3 border-2 border-[#e6d800] min-w-[120px]">
+            <span class="material-icons-outlined text-xl text-slate-700 block mb-1">local_shipping</span>
+            <p class="text-xs font-bold">clasp</p>
+            <p class="text-xs text-slate-400">GASに届ける</p>
+          </div>
+          <span class="material-icons-outlined text-slate-300 rotate-90 sm:rotate-0">arrow_forward</span>
+          <div class="bg-white rounded-lg p-3 border border-slate-200 min-w-[120px]">
+            <span class="material-icons-outlined text-xl text-[#4DC4FF] block mb-1">code</span>
+            <p class="text-xs font-bold">Google Apps Script</p>
+            <p class="text-xs text-slate-400">動く</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 text-center mt-3">clasp は Claude Code の機能ではなく、Google が作った別のツール。<br/>でも Claude Code の中から呼び出せるので、シームレスに使える。</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-slate-100 rounded-xl p-4 border border-slate-300">
+          <p class="text-xs font-bold text-slate-600 mb-2">clasp なし</p>
+          <ul class="space-y-1.5 text-xs text-slate-500">
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-slate-400 text-sm">close</span>ブラウザでGASエディタを開く</li>
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-slate-400 text-sm">close</span>コードをコピペで貼り付ける</li>
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-slate-400 text-sm">close</span>ファイルが増えると面倒</li>
+          </ul>
+        </div>
+        <div class="bg-[#BFE4FF]/10 rounded-xl p-4 border border-[#BFE4FF]/40">
+          <p class="text-xs font-bold text-[#0369A1] mb-2">clasp あり</p>
+          <ul class="space-y-1.5 text-xs text-slate-600">
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm">check_circle</span>Claude Code がファイルを書く</li>
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm">check_circle</span><code class="bg-white px-1 rounded">clasp push</code> 1発でGASに反映</li>
+            <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm">check_circle</span>何ファイルあっても一瞬</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Part 3: ハンズオン -->
+<section id="part-3" class="py-14 bg-[#C9ACE6]/5">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="mb-8">
+    <span class="inline-block bg-[#FF8082]/10 text-[#FF8082] px-4 py-1 rounded-full text-sm font-bold mb-4">Part 3</span>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-2">ハンズオン: 自分で作って動かす</h2>
+    <p class="text-slate-500">ターミナルで準備 → Claude Code で作る → 動かす</p>
+  </div>
+
+  <!-- 役割分担の説明 -->
+  <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-5">
+    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+      <span class="material-icons-outlined text-[#4DC4FF] text-xl">splitscreen</span>
+      ターミナルとClaude Code の役割分担
+    </h3>
+    <p class="text-sm text-slate-600 mb-4">今日の作業は2つの画面を使い分けます。ターミナルの別タブを開いてください。</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-slate-800 rounded-xl p-5 text-white">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-icons-outlined text-[#4DC4FF]">terminal</span>
+          <p class="font-bold text-sm">ターミナル（別タブ）</p>
+        </div>
+        <p class="text-xs text-white/70 mb-2">やるのは <strong class="text-white">2回だけ</strong></p>
+        <ul class="space-y-1.5 text-xs text-white/90">
+          <li class="flex items-start gap-1.5"><span class="text-[#4DC4FF]">1.</span> clasp インストール</li>
+          <li class="flex items-start gap-1.5"><span class="text-[#4DC4FF]">2.</span> clasp ログイン</li>
+        </ul>
+      </div>
+      <div class="bg-[#BFE4FF]/10 rounded-xl p-5 border border-[#BFE4FF]/40">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-icons-outlined text-[#4DC4FF]">smart_toy</span>
+          <p class="font-bold text-sm">Claude Code</p>
+        </div>
+        <p class="text-xs text-slate-500 mb-2"><strong class="text-slate-700">残り全部</strong></p>
+        <ul class="space-y-1.5 text-xs text-slate-600">
+          <li class="flex items-start gap-1.5"><span class="text-[#4DC4FF]">3.</span> コード生成</li>
+          <li class="flex items-start gap-1.5"><span class="text-[#4DC4FF]">4.</span> clasp push</li>
+        </ul>
+      </div>
+    </div>
+    <div class="bg-[#FFFF80]/20 border border-[#e6d800] rounded-xl p-3 mt-4 flex items-start gap-2">
+      <span class="material-icons-outlined text-slate-700 text-base mt-0.5 flex-shrink-0">info</span>
+      <p class="text-xs text-slate-700"><code class="bg-white px-1 rounded">clasp login</code> はブラウザ認証を伴うため、ターミナルから直接実行したほうがスムーズです。</p>
+    </div>
+  </div>
+
+  <!-- フェーズA -->
+  <div class="mb-3">
+    <div class="inline-flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-bold">
+      <span class="material-icons-outlined text-[#4DC4FF] text-base">terminal</span>
+      フェーズA: ターミナルで準備（5分）
+    </div>
+  </div>
+
+  <div class="space-y-2 mb-8">
+    <!-- Step 1 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 1</div>
+        <div class="step-bar-title">clasp をインストール</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">ターミナルの別タブを開いて、以下をコピーして貼り付け → <span class="kbd-key">Enter</span> を押す。</p>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-clasp-install')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-clasp-install">npm install -g @google/clasp</pre>
+      </div>
+
+      <div class="terminal-mock">
+        <div class="terminal-bar">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-bar-label">Terminal</span>
+        </div>
+        <div class="terminal-body">
+          <span class="prompt">~ %</span> <span class="command">npm install -g @google/clasp</span><br>
+          <span class="output">added 259 packages in 6s</span>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>Node.js は前回の講座でインストール済み。まだの人は前回のアーカイブを確認してください。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 2</div>
+        <div class="step-bar-title">clasp にログイン</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">同じタブで以下をコピーして貼り付け → <span class="kbd-key">Enter</span> を押す。</p>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-clasp-login')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-clasp-login">clasp login</pre>
+      </div>
+
+      <div class="terminal-mock">
+        <div class="terminal-bar">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-bar-label">Terminal</span>
+        </div>
+        <div class="terminal-body">
+          <span class="prompt">~ %</span> <span class="command">clasp login</span><br>
+          <span class="output">Logging in globally...</span><br>
+          <span class="output">Authorization successful.</span>
+        </div>
+      </div>
+
+      <div class="instruction-block">
+        <ol>
+          <li>ブラウザが自動で開く → Googleアカウントでログイン</li>
+          <li>「許可」をクリック</li>
+          <li>ターミナルに <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-xs">Authorization successful.</code> と出たら完了</li>
+        </ol>
+      </div>
+
+      <div class="tip-box">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>ブラウザが開かない場合は、ターミナルに表示されたURLをコピーしてブラウザに貼り付けてください。</p>
+      </div>
+
+      <div class="bg-[#BFE4FF]/10 border border-[#BFE4FF]/30 rounded-xl p-3 mt-3 flex items-center gap-2">
+        <span class="material-icons-outlined text-[#4DC4FF] text-base flex-shrink-0">check_circle</span>
+        <p class="text-xs text-slate-700 font-bold">ここまで終わったら、もうこのタブは使いません。Claude Code に戻りましょう。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- フェーズB -->
+  <div class="mb-3">
+    <div class="inline-flex items-center gap-2 bg-[#4DC4FF] text-white px-4 py-2 rounded-full text-sm font-bold">
+      <span class="material-icons-outlined text-white text-base">smart_toy</span>
+      フェーズB: Claude Code で作る（25分）
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <!-- Step 3 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 3</div>
+        <div class="step-bar-title">スプレッドシートを作成してスクリプトIDを取得</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">GASのコードを紐づける先を準備します。</p>
+
+      <div class="space-y-2">
+        <div class="flex items-start gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <span class="w-5 h-5 bg-[#4DC4FF] text-white rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+          <p class="text-sm text-slate-600">Googleスプレッドシートを<strong>新規作成</strong>する</p>
+        </div>
+        <div class="flex items-start gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <span class="w-5 h-5 bg-[#4DC4FF] text-white rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+          <p class="text-sm text-slate-600">メニュー「<strong>拡張機能</strong>」→「<strong>Apps Script</strong>」を開く</p>
+        </div>
+        <div class="flex items-start gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <span class="w-5 h-5 bg-[#4DC4FF] text-white rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+          <p class="text-sm text-slate-600">左メニュー「<strong>プロジェクトの設定</strong>」（歯車マーク）を開く</p>
+        </div>
+        <div class="flex items-start gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <span class="w-5 h-5 bg-[#4DC4FF] text-white rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+          <p class="text-sm text-slate-600">「<strong>スクリプト ID</strong>」をコピーする</p>
+        </div>
+      </div>
+
+      <div class="tip-box mt-3">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>スクリプトIDは「住所」のようなもの。パスワードではないので、Claude Code に渡して大丈夫です。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 3.5: clasp clone -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm border-l-4 border-l-[#FF8082]">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 4</div>
+        <div class="step-bar-title">clasp clone でプロジェクトを取得</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">先ほどのターミナル（別タブ）に戻って、以下をコピーして貼り付け → <span class="kbd-key">Enter</span> を押す。<br>★の部分は、さっきコピーしたスクリプトIDに置き換えてください。</p>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-clasp-clone')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-clasp-clone">clasp clone ★ここにスクリプトIDを貼り付け★</pre>
+      </div>
+
+      <div class="terminal-mock">
+        <div class="terminal-bar">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-bar-label">Terminal</span>
+        </div>
+        <div class="terminal-body">
+          <span class="prompt">~/my-work %</span> <span class="command">clasp clone 1BxTj...abc</span><br>
+          <span class="output">Cloned 2 files.</span><br>
+          <span class="output">└─ appsscript.json</span><br>
+          <span class="output">└─ Code.js</span>
+        </div>
+      </div>
+
+      <div class="bg-[#FF8082]/5 border border-[#FF8082]/30 rounded-xl p-4 mt-3">
+        <div class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#FF8082] text-base mt-0.5 flex-shrink-0">priority_high</span>
+          <div>
+            <p class="text-xs font-bold text-[#FF8082] mb-1">なぜ clasp clone が必要？</p>
+            <p class="text-xs text-slate-600 leading-relaxed">clasp clone は、スプレッドシートのGASプロジェクトをローカルに「コピー」するコマンドです。これにより <code class="bg-white px-1 rounded border border-slate-200">.clasp.json</code> が自動生成され、以降の <code class="bg-white px-1 rounded border border-slate-200">clasp push</code> が正しいプロジェクトに紐づきます。この手順を飛ばすと push 先がわからずエラーになります。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-box mt-3">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>clasp clone を実行したフォルダで Claude Code を開いてください。Claude Code はこのフォルダにコードを生成します。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 5: スキルインストール -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 5</div>
+        <div class="step-bar-title">GASガイドラインスキルをインストール</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">Claude Code に「GASの書き方ルール」を覚えさせます。これを入れると、コードの品質が安定します。</p>
+
+      <div class="instruction-block">
+        <ol>
+          <li>スキルギャラリーから <strong>gas-guidelines</strong> をダウンロード</li>
+          <li>Claude Code にファイルパスを渡してインストール</li>
+        </ol>
+      </div>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-skill')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-skill">@/Users/あなたのユーザー名/Downloads/gas-guidelines.zip をインストールして</pre>
+      </div>
+
+      <div class="tip-box">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>第7回で kikaku スキルをインストールしたのと同じ手順です。このスキルが入っていると、GASの鉄則・実行制限・ヘッダールールなどを Claude Code が自動で守ってくれます。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 5: Claude Code でGASを書かせる -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 6</div>
+        <div class="step-bar-title">Claude Code にアンケート集計GASを作ってもらう</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">Claude Code に戻って、以下を貼り付けて <span class="kbd-key">Enter</span> を押す。<br>★の部分は、さっきコピーしたスクリプトIDに置き換えてください。</p>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-gas')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-gas">アンケート集計GASを作って。
+
+スクリプトID: ★ここに貼り付け★
+
+セミナーの満足度アンケートを作りたい。
+満足度、理解度、良かった点（複数選択）、質問欄、感想欄の5問。
+ダッシュボードで集計結果を見れるようにして。</pre>
+      </div>
+
+      <p class="text-xs font-bold text-slate-700 mb-2">Claude Code が自動でやること:</p>
+      <ul class="space-y-1.5 text-xs text-slate-600">
+        <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>Code.gs（GASのメインコード）を生成</li>
+        <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>index.html（ダッシュボード画面）を生成</li>
+        <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>.clasp.json（スクリプトID設定）を生成</li>
+        <li class="flex items-start gap-1.5"><span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>appsscript.json（マニフェスト）を生成</li>
+      </ul>
+
+      <div class="tip-box mt-3">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>Claude Code が許可を求めてきたら「許可」を押してください。ファイルの書き込みや clasp コマンドの実行に権限が必要です。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 7</div>
+        <div class="step-bar-title">clasp push でGASにアップロード</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">Claude Code にそのまま頼めばOK。</p>
+
+      <div class="prompt-box mb-3">
+        <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-push')">
+          <span class="material-icons-outlined text-base">content_copy</span> コピー
+        </button>
+        <pre id="prompt-push">clasp push して</pre>
+      </div>
+
+      <div class="terminal-mock">
+        <div class="terminal-bar">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-bar-label">Claude Code</span>
+        </div>
+        <div class="terminal-body">
+          <span class="prompt">$</span> <span class="command">clasp push --force</span><br>
+          <span class="output">Pushed 4 files.</span>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-2"><strong>Pushed 4 files.</strong> と出たら成功です。</p>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 8</div>
+        <div class="step-bar-title">フォームを作成して回答する</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">ブラウザに戻って、スプレッドシートを操作します。</p>
+
+      <div class="instruction-block">
+        <ol>
+          <li><strong>スプレッドシートをリロード</strong>する（ページ更新）</li>
+          <li>メニュー「<strong>アンケート集計</strong>」→「<strong>全フォーム作成</strong>」をクリック</li>
+          <li>認証ダイアログが出たら「<strong>許可</strong>」する</li>
+          <li>「<strong>フォームURLを表示</strong>」でURLを取得</li>
+          <li>フォームを開いて、自分で<strong>2〜3件回答</strong>する</li>
+        </ol>
+      </div>
+
+      <div class="tip-box">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>「このアプリは確認されていません」という警告が出ることがあります。左下の「詳細」→「（安全でないページ）に移動」で進めてください。自分で作ったスクリプトなので問題ありません。</p>
+      </div>
+    </div>
+
+    <div class="step-arrow-down">
+      <span class="material-icons-outlined">arrow_downward</span>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div class="step-bar">
+        <div class="step-bar-number">STEP 9</div>
+        <div class="step-bar-title">デプロイしてダッシュボードを確認する</div>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-3">GASエディタでWEBアプリとして公開し、ダッシュボードにアクセスします。</p>
+
+      <div class="instruction-block">
+        <ol>
+          <li>スプレッドシートのメニュー「<strong>拡張機能</strong>」→「<strong>Apps Script</strong>」でGASエディタを開く</li>
+          <li>右上の「<strong>デプロイ</strong>」ボタン →「<strong>新しいデプロイ</strong>」をクリック</li>
+          <li>種類の横にある歯車マーク →「<strong>ウェブアプリ</strong>」を選択</li>
+          <li>以下の設定にする：
+            <div class="bg-slate-50 rounded-lg p-3 mt-2 border border-slate-200 text-xs space-y-1">
+              <div class="flex items-center gap-2"><span class="font-bold w-32">説明</span><span>アンケート集計ダッシュボード</span></div>
+              <div class="flex items-center gap-2"><span class="font-bold w-32">次のユーザーとして実行</span><span>自分</span></div>
+              <div class="flex items-center gap-2"><span class="font-bold w-32">アクセスできるユーザー</span><span><strong>全員</strong></span></div>
+            </div>
+          </li>
+          <li>「<strong>デプロイ</strong>」をクリック → 表示されたURLをクリック</li>
+        </ol>
+      </div>
+
+      <!-- デプロイ設定の解説 -->
+      <div class="mt-4 space-y-3">
+        <p class="text-xs font-bold text-[#0369A1]">デプロイ設定の意味</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-xl p-5 border-2 border-[#BFE4FF] bg-[#BFE4FF]/5">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-icons-outlined text-[#4DC4FF] text-xl">person</span>
+              <p class="text-sm font-bold text-slate-800">自分として実行</p>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">スプシのデータを読み取るとき、<strong>あなたの権限</strong>を使う。他の人がダッシュボードを見ても、スプシへの権限を個別に渡す必要がない。</p>
+          </div>
+          <div class="rounded-xl p-5 border-2 border-[#BFE4FF] bg-[#BFE4FF]/5">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-icons-outlined text-[#4DC4FF] text-xl">public</span>
+              <p class="text-sm font-bold text-slate-800">全員がアクセス</p>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">URLを知っていれば<strong>誰でもダッシュボードを見られる</strong>。アンケート結果をチームや参加者に共有するために必要。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 新しいデプロイ vs デプロイを管理 -->
+      <div class="bg-[#FAFAF8] rounded-xl p-5 border border-slate-200 mt-3">
+        <p class="text-xs font-bold text-[#0369A1] mb-3">「新しいデプロイ」と「デプロイを管理」の違い</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-white rounded-lg p-4 border border-slate-200">
+            <p class="text-xs font-bold text-slate-700 mb-1">新しいデプロイ</p>
+            <p class="text-xs text-slate-500">新しいURLが発行される。今回のように初めてWEBアプリを公開するときに使う。</p>
+          </div>
+          <div class="bg-white rounded-lg p-4 border border-slate-200">
+            <p class="text-xs font-bold text-slate-700 mb-1">デプロイを管理</p>
+            <p class="text-xs text-slate-500">既存デプロイの鉛筆マーク → バージョンを「新しいバージョン」に変更 → デプロイ。<strong>URLはそのままで、コードだけ更新できる。</strong></p>
+          </div>
+        </div>
+        <div class="tip-box mt-3">
+          <span class="material-icons-outlined">lightbulb</span>
+          <p>コードを修正した後は「デプロイを管理」からバージョン更新すればOK。URLは変わりません。Webhookのように外部サービスにURL登録している場合も、登録し直す必要はありません。</p>
+        </div>
+      </div>
+
+      <!-- Claude Codeでデプロイまでできる -->
+      <div class="bg-slate-800 rounded-xl p-5 text-white mt-3">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-icons-outlined text-[#4DC4FF]">smart_toy</span>
+          <p class="text-sm font-bold text-[#4DC4FF]">実は、デプロイもClaude Codeに任せられる</p>
+        </div>
+        <p class="text-xs text-white/90 mb-2">今回は仕組みを理解するために手動でやりましたが、<code class="bg-white/20 px-1.5 py-0.5 rounded">clasp deploy</code> コマンドでデプロイも自動化できます。</p>
+        <p class="text-xs text-white/90">つまり Claude Code に「デプロイまでして」と言えば、<strong>コード生成 → push → デプロイ</strong> まで全部やってくれます。慣れてきたら試してみてください。</p>
+      </div>
+
+      <div class="tip-box mt-3">
+        <span class="material-icons-outlined">lightbulb</span>
+        <p>ダッシュボードが表示されて、回答データがグラフに反映されていれば完成です。このURLをブックマークしておくと、いつでもダッシュボードを確認できます。</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 宿題 -->
+<section class="py-12 bg-slate-800 text-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-8">
+    <p class="text-sm font-bold text-[#4DC4FF] uppercase tracking-wider mb-2">Homework</p>
+    <h2 class="text-2xl md:text-3xl font-extrabold">宿題</h2>
+  </div>
+  <div class="max-w-lg mx-auto">
+    <div class="bg-white/10 rounded-2xl p-8 border border-white/20 text-center">
+      <span class="material-icons-outlined text-5xl text-[#4DC4FF] mb-4 block">photo_camera</span>
+      <h3 class="text-xl font-extrabold mb-3">ダッシュボードのスクリーンショットを提出</h3>
+      <ul class="text-white/90 text-sm mb-6 leading-relaxed text-left space-y-2 max-w-sm mx-auto">
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>
+          Claude Code でアンケート集計GASを作成する
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>
+          clasp push でデプロイする
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>
+          フォームに回答してダッシュボードにデータを表示する
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-icons-outlined text-[#4DC4FF] text-sm mt-0.5 flex-shrink-0">check_circle</span>
+          ダッシュボード画面のスクリーンショットを撮って提出
+        </li>
+      </ul>
+      <a class="inline-flex items-center gap-2 bg-[#4DC4FF] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#3AB4EF] transition-colors" href="https://docs.google.com/forms/d/e/1FAIpQLSeBXBNOQjksaA5JCOGFHFX1l1qJtRjzIzgw_i4UcVNQg4NGNA/viewform?usp=pp_url&entry.1261106693=%E7%AC%AC10%E5%9B%9E%E7%AE%A1%E7%90%86%E3%82%92%E8%87%AA%E5%8B%95%E5%8C%96%E3%81%99%E3%82%8B(2026%2F03%2F27)" target="_blank" rel="noopener">
+        <span class="material-icons-outlined">send</span>
+        提出フォームを開く
+      </a>
+      <p class="text-xs text-white/60 mt-3">提出するとSlackに通知が届きます</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- まとめ -->
+<section class="hero-gradient py-14 text-white">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+  <p class="text-sm font-bold text-white/90 uppercase tracking-wider mb-3">Summary</p>
+  <h2 class="text-2xl md:text-3xl font-extrabold mb-8">今日できるようになったこと</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8">
+    <div class="bg-white/20 backdrop-blur rounded-xl p-5 flex items-center gap-3">
+      <span class="material-icons-outlined text-3xl flex-shrink-0">code</span>
+      <p class="font-bold text-sm text-left">GASが何かわかった</p>
+    </div>
+    <div class="bg-white/20 backdrop-blur rounded-xl p-5 flex items-center gap-3">
+      <span class="material-icons-outlined text-3xl flex-shrink-0">cloud_upload</span>
+      <p class="font-bold text-sm text-left">clasp push でデプロイできた</p>
+    </div>
+    <div class="bg-white/20 backdrop-blur rounded-xl p-5 flex items-center gap-3">
+      <span class="material-icons-outlined text-3xl flex-shrink-0">smart_toy</span>
+      <p class="font-bold text-sm text-left">Claude Code にGASを書いてもらえた</p>
+    </div>
+    <div class="bg-white/20 backdrop-blur rounded-xl p-5 flex items-center gap-3">
+      <span class="material-icons-outlined text-3xl flex-shrink-0">analytics</span>
+      <p class="font-bold text-sm text-left">アンケート集計ダッシュボードが動いた</p>
+    </div>
+  </div>
+  <p class="text-white/90 text-sm">次回の勉強会もお楽しみに</p>
+</div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-white py-8">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <div class="flex items-center gap-2">
+    <span class="material-icons-outlined text-[#4DC4FF] text-xl">terminal</span>
+    <span class="font-bold">Claude Code 勉強会 第10回</span>
+  </div>
+  <p class="text-slate-400 text-sm">配布資料 | 2026年3月27日</p>
+</div>
+</footer>
+
+<script>
+function copyPrompt(button, promptId) {
+  const promptElement = document.getElementById(promptId);
+  const text = promptElement.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    button.classList.add('copied');
+    button.innerHTML = '<span class="material-icons-outlined text-base">check</span> コピー完了';
+    setTimeout(() => {
+      button.classList.remove('copied');
+      button.innerHTML = '<span class="material-icons-outlined text-base">content_copy</span> コピー';
+    }, 2000);
+  }).catch(err => {
+    console.error('コピーに失敗:', err);
+    alert('コピーに失敗しました');
+  });
+}
+</script>
+</body>
+</html>
