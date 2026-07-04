@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アンケート集計ダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+:root {
+  --primary: #4DC4FF;
+  --primary-dark: #0369A1;
+  --danger: #FF8082;
+  --accent: #FFFF80;
+  --bg: #FAFAF8;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-sub: #64748b;
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); }
+
+/* Header */
+.header { background:#fff; border-bottom:1px solid #e2e8f0; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.header h1 { font-size:1.1rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+.header h1 .material-icons-outlined { color:var(--primary); }
+.meta { display:flex; gap:16px; font-size:0.8rem; color:var(--text-sub); }
+.meta span { display:flex; align-items:center; gap:4px; }
+
+/* Tabs */
+.tabs { background:#fff; border-bottom:1px solid #e2e8f0; padding:0 24px; display:flex; gap:0; }
+.tab { padding:12px 20px; font-size:0.85rem; font-weight:500; color:var(--text-sub); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--primary-dark); border-bottom-color:var(--primary); font-weight:700; }
+
+/* Container */
+.container { max-width:1000px; margin:0 auto; padding:24px; }
+
+/* Cards */
+.card { background:var(--card); border-radius:var(--radius); padding:20px; border:1px solid #e2e8f0; margin-bottom:16px; }
+.card h2 { font-size:1rem; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.card h2 .material-icons-outlined { font-size:20px; color:var(--primary); }
+
+/* Score Cards */
+.score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:20px; }
+.score-card { background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-radius:var(--radius); padding:20px; text-align:center; border:1px solid #bae6fd; }
+.score-card .value { font-size:2rem; font-weight:700; color:var(--primary-dark); }
+.score-card .label { font-size:0.8rem; color:var(--text-sub); margin-top:4px; }
+
+/* Bar Chart */
+.bar-chart { margin:8px 0; }
+.bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.bar-label { font-size:0.75rem; width:120px; text-align:right; flex-shrink:0; color:var(--text-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bar-track { flex:1; height:24px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; background:var(--primary); transition:width 0.6s ease; display:flex; align-items:center; padding-left:8px; }
+.bar-fill span { font-size:0.7rem; color:#fff; font-weight:700; }
+.bar-count { font-size:0.75rem; color:var(--text-sub); width:40px; text-align:right; flex-shrink:0; }
+
+/* Hot Words */
+.word-cloud { display:flex; flex-wrap:wrap; gap:8px; padding:12px 0; }
+.word-tag { padding:6px 14px; border-radius:20px; font-size:0.85rem; font-weight:500; background:#e0f2fe; color:var(--primary-dark); }
+.word-tag.negative { background:#ffe4e6; color:#be123c; }
+
+/* Comments */
+.comment-card { background:#f8fafc; border-radius:8px; padding:14px; margin-bottom:10px; border-left:3px solid var(--primary); }
+.comment-card.low-score { border-left-color:var(--danger); }
+.comment-card .comment-text { font-size:0.85rem; line-height:1.7; margin-bottom:6px; }
+.comment-card .comment-meta { font-size:0.7rem; color:var(--text-sub); display:flex; gap:12px; flex-wrap:wrap; }
+.comment-badge { font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:500; }
+.comment-badge.long { background:#dbeafe; color:#1d4ed8; }
+.comment-badge.low-score { background:#ffe4e6; color:#be123c; }
+.comment-badge.keyword { background:#fef3c7; color:#92400e; }
+
+/* FAQ */
+.faq-item { border-bottom:1px solid #e2e8f0; padding:0; }
+.faq-item:last-child { border-bottom:none; }
+.faq-q { font-size:0.9rem; font-weight:700; display:flex; align-items:flex-start; gap:8px; cursor:pointer; padding:14px 0; user-select:none; }
+.faq-q:hover { color:var(--primary-dark); }
+.faq-q .material-icons-outlined { color:var(--primary); font-size:20px; flex-shrink:0; margin-top:2px; transition:transform 0.2s; }
+.faq-q.open .material-icons-outlined { transform:rotate(90deg); }
+.faq-a { display:none; padding:0 0 14px 28px; font-size:0.85rem; line-height:1.7; color:var(--text); }
+.faq-a.open { display:block; }
+.faq-source { font-size:0.7rem; color:var(--text-sub); margin-top:4px; padding-left:28px; }
+
+/* Loading */
+.loading { text-align:center; padding:40px; color:var(--text-sub); }
+.loading .material-icons-outlined { font-size:40px; animation:spin 1s linear infinite; color:var(--primary); }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Page */
+.page { display:none; }
+.page.active { display:block; }
+
+/* Survey Section */
+.survey-section { margin-bottom:24px; }
+.survey-section h3 { font-size:0.9rem; font-weight:700; color:var(--primary-dark); margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #e0f2fe; display:flex; align-items:center; gap:6px; }
+.survey-section h3 .material-icons-outlined { font-size:18px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="material-icons-outlined">analytics</span>アンケート集計ダッシュボード</h1>
+  <div class="meta">
+    <span><span class="material-icons-outlined" style="font-size:16px">groups</span> 回答数: <strong id="totalCount">-</strong></span>
+    <span><span class="material-icons-outlined" style="font-size:16px">description</span> アンケート数: <strong id="surveyCount">-</strong></span>
+    <span><span class="material-icons-outlined" style="font-size:16px">update</span> <span id="lastUpdate">-</span></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchPage('dashboard')"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px;">dashboard</span>Dashboard</div>
+  <div class="tab" onclick="switchPage('hotwords')"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px;">local_fire_department</span>Hot Words</div>
+  <div class="tab" onclick="switchPage('faq')"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px;">help</span>FAQ</div>
+</div>
+
+<!-- Dashboard -->
+<div id="page-dashboard" class="page active">
+  <div class="container">
+    <div id="dashboard-loading" class="loading">
+      <span class="material-icons-outlined">sync</span>
+      <p>データを読み込んでいます...</p>
+    </div>
+    <div id="dashboard-content" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Hot Words -->
+<div id="page-hotwords" class="page">
+  <div class="container">
+    <div id="hotwords-loading" class="loading">
+      <span class="material-icons-outlined">sync</span>
+      <p>ホットワードを分析中...</p>
+    </div>
+    <div id="hotwords-content" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div id="page-faq" class="page">
+  <div class="container">
+    <div id="faq-loading" class="loading">
+      <span class="material-icons-outlined">sync</span>
+      <p>FAQを生成中...</p>
+    </div>
+    <div id="faq-content" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+let loadedPages = {};
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.tab')[['dashboard','hotwords','faq'].indexOf(page)].classList.add('active');
+
+  if (!loadedPages[page]) {
+    loadedPages[page] = true;
+    switch(page) {
+      case 'dashboard': loadDashboard(); break;
+      case 'hotwords': loadHotWords(); break;
+      case 'faq': loadFaq(); break;
+    }
+  }
+}
+
+// Dashboard
+let dashboardData = null;
+
+function loadDashboard() {
+  google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(showError).getSurveyData();
+}
+
+function renderDashboard(data) {
+  dashboardData = data;
+  document.getElementById('totalCount').textContent = data.totalResponses;
+  document.getElementById('surveyCount').textContent = data.surveyCount;
+  document.getElementById('lastUpdate').textContent = data.lastUpdate;
+
+  // プルダウン + コンテンツ
+  let html = '';
+  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">';
+  html += '<label style="font-size:0.85rem;font-weight:700;color:var(--text-sub);">表示:</label>';
+  html += '<select id="surveyFilter" onchange="filterDashboard()" style="padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;font-size:0.85rem;font-family:inherit;background:#fff;color:var(--text);cursor:pointer;">';
+  html += '<option value="all">全体（合算）</option>';
+  data.surveys.forEach((s, i) => {
+    html += `<option value="${i}">${s.name}（${s.responseCount}件）</option>`;
+  });
+  html += '</select></div>';
+  html += '<div id="dashboard-cards"></div>';
+
+  document.getElementById('dashboard-loading').style.display = 'none';
+  document.getElementById('dashboard-content').style.display = 'block';
+  document.getElementById('dashboard-content').innerHTML = html;
+
+  filterDashboard();
+}
+
+function filterDashboard() {
+  const filter = document.getElementById('surveyFilter').value;
+  const data = dashboardData;
+  let surveys, totalCount;
+
+  if (filter === 'all') {
+    surveys = data.surveys;
+    totalCount = data.totalResponses;
+  } else {
+    surveys = [data.surveys[parseInt(filter)]];
+    totalCount = surveys[0].responseCount;
+  }
+
+  // 合算: 同名の質問をマージ
+  const merged = mergeQuestions(surveys, filter === 'all');
+  let html = '';
+
+  // スコアカード
+  const scales = merged.filter(q => q.type === 'scale');
+  if (scales.length > 0) {
+    html += '<div class="score-grid">';
+    html += `<div class="score-card"><div class="value">${totalCount}</div><div class="label">総回答数</div></div>`;
+    scales.slice(0, 3).forEach(q => {
+      html += `<div class="score-card"><div class="value">${q.avg}</div><div class="label">${q.title}（平均）</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // 質問カード
+  merged.forEach(q => {
+    html += `<div class="card"><h2><span class="material-icons-outlined">${q.type === 'scale' ? 'bar_chart' : q.type === 'text' ? 'chat' : 'poll'}</span>${q.title}</h2>`;
+
+    if (q.type === 'scale') {
+      html += `<p style="font-size:0.8rem;color:var(--text-sub);margin-bottom:8px;">平均: <strong style="color:var(--primary-dark);font-size:1.1rem;">${q.avg}</strong> / 5（${q.count}件）</p>`;
+      html += '<div class="bar-chart">';
+      for (let i = 5; i >= 1; i--) {
+        const count = q.distribution[i] || 0;
+        const pct = q.count > 0 ? Math.round(count / q.count * 100) : 0;
+        html += `<div class="bar-row"><div class="bar-label">${i}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${i >= 4 ? 'var(--primary)' : i === 3 ? '#94a3b8' : 'var(--danger)'}"><span>${pct}%</span></div></div><div class="bar-count">${count}件</div></div>`;
+      }
+      html += '</div>';
+    } else if (q.type === 'choice' || q.type === 'checkbox') {
+      const counts = q.counts;
+      const max = Math.max(...Object.values(counts));
+      html += '<div class="bar-chart">';
+      Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([label, count]) => {
+        const pct = max > 0 ? Math.round(count / max * 100) : 0;
+        html += `<div class="bar-row"><div class="bar-label" title="${label}">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"><span>${count}</span></div></div><div class="bar-count">${count}件</div></div>`;
+      });
+      html += '</div>';
+    } else if (q.type === 'text') {
+      q.values.forEach(v => {
+        html += `<div style="background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:6px;font-size:0.85rem;line-height:1.7;border-left:3px solid var(--primary);">${escapeHtml(v)}</div>`;
+      });
+    }
+
+    html += '</div>';
+  });
+
+  document.getElementById('dashboard-cards').innerHTML = html;
+}
+
+function mergeQuestions(surveys, isAll) {
+  if (!isAll || surveys.length === 1) {
+    return surveys[0].questions;
+  }
+
+  const merged = {};
+  surveys.forEach(s => {
+    s.questions.forEach(q => {
+      const key = q.title;
+      if (!merged[key]) {
+        merged[key] = JSON.parse(JSON.stringify(q));
+      } else {
+        const m = merged[key];
+        if (q.type === 'scale' && m.type === 'scale') {
+          const totalCount = m.count + q.count;
+          m.avg = Math.round(((m.avg * m.count) + (q.avg * q.count)) / totalCount * 10) / 10;
+          for (let i = 1; i <= 5; i++) {
+            m.distribution[i] = (m.distribution[i] || 0) + (q.distribution[i] || 0);
+          }
+          m.count = totalCount;
+        } else if ((q.type === 'choice' || q.type === 'checkbox') && m.type === q.type) {
+          Object.entries(q.counts).forEach(([k, v]) => {
+            m.counts[k] = (m.counts[k] || 0) + v;
+          });
+          m.total = (m.total || 0) + (q.total || 0);
+        } else if (q.type === 'text' && m.type === 'text') {
+          m.values = m.values.concat(q.values).slice(0, 20);
+        }
+      }
+    });
+  });
+
+  return Object.values(merged);
+}
+
+// Hot Words
+function loadHotWords() {
+  google.script.run.withSuccessHandler(renderHotWords).withFailureHandler(showError).getHotWords();
+}
+
+function renderHotWords(data) {
+  let html = '';
+
+  if (data.negatives.length > 0) {
+    html += '<div class="card"><h2><span class="material-icons-outlined" style="color:var(--danger)">warning</span>ネガティブワード検知</h2>';
+    data.negatives.forEach(w => {
+      html += `<div style="margin-bottom:12px;">`;
+      html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span class="word-tag negative">${escapeHtml(w.word)}(${w.count})</span></div>`;
+      w.hits.forEach(h => {
+        html += `<div style="background:#fff5f5;border-radius:6px;padding:8px 12px;margin-bottom:4px;font-size:0.8rem;line-height:1.6;border-left:3px solid var(--danger);display:flex;gap:8px;align-items:flex-start;">`;
+        html += `<span style="font-size:0.7rem;color:var(--danger);white-space:nowrap;flex-shrink:0;margin-top:2px;">${escapeHtml(h.source)}</span>`;
+        html += `<span>${escapeHtml(h.text)}</span>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+    html += '</div>';
+  }
+
+  html += `<div class="card"><h2><span class="material-icons-outlined">local_fire_department</span>頻出ワード TOP30</h2>`;
+  html += `<p style="font-size:0.8rem;color:var(--text-sub);margin-bottom:12px;">自由記述 ${data.totalTexts}件から抽出</p>`;
+  html += '<div class="word-cloud">';
+  const maxCount = data.topWords.length > 0 ? data.topWords[0].count : 1;
+  data.topWords.forEach((w, i) => {
+    const size = 0.75 + (w.count / maxCount) * 0.6;
+    html += `<span class="word-tag" style="font-size:${size}rem;">${escapeHtml(w.word)}(${w.count})</span>`;
+  });
+  html += '</div></div>';
+
+  document.getElementById('hotwords-loading').style.display = 'none';
+  document.getElementById('hotwords-content').style.display = 'block';
+  document.getElementById('hotwords-content').innerHTML = html;
+}
+
+// Comments
+function loadComments() {
+  google.script.run.withSuccessHandler(renderComments).withFailureHandler(showError).getNotableComments();
+}
+
+function renderComments(data) {
+  let html = `<div class="card"><h2><span class="material-icons-outlined">chat_bubble</span>注目コメント（${data.totalFound}件中 上位${Math.min(30, data.totalFound)}件）</h2>`;
+
+  data.comments.forEach(c => {
+    const isLow = c.types.includes('low-score');
+    html += `<div class="comment-card${isLow ? ' low-score' : ''}">`;
+    html += `<div class="comment-text">${escapeHtml(c.text)}</div>`;
+    html += `<div class="comment-meta">`;
+    html += `<span>${c.source}</span><span>${c.question}</span>`;
+    c.types.forEach(t => {
+      const labels = { 'long': '長文', 'low-score': '低評価', 'keyword': '要望/質問' };
+      html += `<span class="comment-badge ${t}">${labels[t] || t}</span>`;
+    });
+    if (c.timestamp) html += `<span>${c.timestamp}</span>`;
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  document.getElementById('comments-loading').style.display = 'none';
+  document.getElementById('comments-content').style.display = 'block';
+  document.getElementById('comments-content').innerHTML = html;
+}
+
+// FAQ
+function loadFaq() {
+  google.script.run.withSuccessHandler(renderFaq).withFailureHandler(showError).getFaqData();
+}
+
+function renderFaq(data) {
+  let html = '';
+
+  if (!data.fromSheet) {
+    html += '<div class="card"><h2><span class="material-icons-outlined" style="color:var(--primary)">sync</span>FAQシートを作成しました</h2>';
+    html += '<p style="font-size:0.85rem;color:var(--text-sub);">スプレッドシートの「FAQ」シートに質問を書き出しました。「回答」列に記入すると、ここに表示されます。</p>';
+    html += '</div>';
+  } else if (data.faqs.length === 0) {
+    html += '<div class="card"><h2><span class="material-icons-outlined">help</span>FAQ</h2>';
+    html += `<p style="font-size:0.85rem;color:var(--text-sub);">スプレッドシートの「FAQ」シートの「回答」列に記入すると表示されます。（未回答: ${data.unanswered}件）</p>`;
+    html += '</div>';
+  } else {
+    html += `<div class="card"><h2><span class="material-icons-outlined">help</span>FAQ（${data.faqs.length}件回答済み）</h2>`;
+    if (data.unanswered > 0) {
+      html += `<p style="font-size:0.8rem;color:var(--text-sub);margin-bottom:12px;">未回答: ${data.unanswered}件</p>`;
+    }
+    data.faqs.forEach((f, i) => {
+      html += '<div class="faq-item">';
+      html += `<div class="faq-q" onclick="toggleFaq(this)"><span class="material-icons-outlined">chevron_right</span>${escapeHtml(f.question)}`;
+      if (f.count > 1) html += ` <span style="font-size:0.75rem;color:var(--danger);font-weight:700;">(${f.count}件)</span>`;
+      html += '</div>';
+      html += `<div class="faq-a">${escapeHtml(f.answer)}</div>`;
+      if (f.source) html += `<div class="faq-source" style="display:none;">${escapeHtml(f.source)}</div>`;
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('faq-loading').style.display = 'none';
+  document.getElementById('faq-content').style.display = 'block';
+  document.getElementById('faq-content').innerHTML = html;
+}
+
+function toggleFaq(el) {
+  el.classList.toggle('open');
+  const answer = el.nextElementSibling;
+  answer.classList.toggle('open');
+  const source = answer.nextElementSibling;
+  if (source && source.classList.contains('faq-source')) {
+    source.style.display = answer.classList.contains('open') ? 'block' : 'none';
+  }
+}
+
+function showError(err) {
+  console.error(err);
+  alert('エラーが発生しました: ' + err.message);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 初期読み込み
+switchPage('dashboard');
+</script>
+</body>
+</html>

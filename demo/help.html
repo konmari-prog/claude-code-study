@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family:'Noto Sans JP',sans-serif; padding:20px; color:#1e293b; line-height:1.8; font-size:14px; }
+h2 { font-size:1.1rem; margin:20px 0 8px; color:#0369A1; }
+h3 { font-size:0.95rem; margin:16px 0 6px; }
+code { background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:0.85em; }
+ol, ul { padding-left:20px; }
+li { margin-bottom:6px; }
+.section { border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<h1 style="font-size:1.2rem;">アンケート集計ダッシュボード 使い方</h1>
+
+<div class="section">
+<h2>1. フォームを作成する</h2>
+<ol>
+<li>メニュー「アンケート集計」→「全フォーム作成」をクリック</li>
+<li>初回は認証ダイアログが出るので「許可」してください</li>
+<li>フォームが自動作成され、URLが表示されます</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>2. フォームを共有する</h2>
+<ol>
+<li>メニュー「アンケート集計」→「フォームURLを表示」</li>
+<li>表示されたURLを参加者に共有してください</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>3. ダッシュボードを確認する</h2>
+<ol>
+<li>メニュー「アンケート集計」→「ダッシュボードを開く」</li>
+<li>または GASエディタ →「デプロイ」→「テストデプロイ」</li>
+</ol>
+<h3>4ページ構成</h3>
+<ul>
+<li><strong>Dashboard</strong>: スコアと質問別グラフ</li>
+<li><strong>Hot Words</strong>: 頻出ワードとネガティブ検知</li>
+<li><strong>Comments</strong>: 注目コメントのピックアップ</li>
+<li><strong>FAQ</strong>: 質問欄の自動FAQ化</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>4. デモ用サンプルデータ</h2>
+<p>メニュー「アンケート集計」→「デモ用サンプルデータ生成」で、ダミーデータを自動投入できます。</p>
+</div>
+
+<div>
+<h2>5. フォームを追加する</h2>
+<p><code>Code.gs</code> の <code>SURVEY_CONFIGS</code> に新しい設定を追加 → <code>clasp push</code> → メニューから個別フォーム作成</p>
+</div>
+</body>
+</html>
