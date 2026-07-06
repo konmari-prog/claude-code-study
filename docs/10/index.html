@@ -658,7 +658,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
         <button class="copy-btn absolute top-3 right-3 bg-slate-600 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" onclick="copyPrompt(this, 'prompt-clasp-install')">
           <span class="material-icons-outlined text-base">content_copy</span> コピー
         </button>
-        <pre id="prompt-clasp-install">npm install -g @google/clasp</pre>
+        <pre id="prompt-clasp-install">npm install -g --ignore-scripts @google/clasp</pre>
       </div>
 
       <div class="terminal-mock">
@@ -669,7 +669,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
           <span class="terminal-bar-label">Terminal</span>
         </div>
         <div class="terminal-body">
-          <span class="prompt">~ %</span> <span class="command">npm install -g @google/clasp</span><br>
+          <span class="prompt">~ %</span> <span class="command">npm install -g --ignore-scripts @google/clasp</span><br>
           <span class="output">added 259 packages in 6s</span>
         </div>
       </div>
